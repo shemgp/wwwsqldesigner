@@ -9,8 +9,8 @@ SQL.TableManager = function(owner) {
 	};
 	this.selection = [];
 	this.adding = false;
-	
-	var ids = ["addtable","removetable","aligntables","cleartables","addrow","edittable","tablekeys"];
+
+	var ids = ["addtable","removetable","aligntables","layouttables","cleartables","addrow","edittable","tablekeys"];
 	for (var i=0;i<ids.length;i++) {
 		var id = ids[i];
 		var elm = OZ.$(id);
@@ -24,18 +24,19 @@ SQL.TableManager = function(owner) {
 		var elm = OZ.$(id);
 		elm.innerHTML = _(id);
 	}
-	
-	
+
+
 	this.select(false);
-	
+
 	this.save = this.save.bind(this);
-	
+
 	OZ.Event.add("area", "click", this.click.bind(this));
 	OZ.Event.add(this.dom.addtable, "click", this.preAdd.bind(this));
 	OZ.Event.add(this.dom.removetable, "click", this.remove.bind(this));
 	OZ.Event.add(this.dom.cleartables, "click", this.clear.bind(this));
 	OZ.Event.add(this.dom.addrow, "click", this.addRow.bind(this));
 	OZ.Event.add(this.dom.aligntables, "click", this.owner.alignTables.bind(this.owner));
+	OZ.Event.add(this.dom.layouttables, "click", this.owner.klayjsLayoutTables.bind(this.owner));
 	OZ.Event.add(this.dom.edittable, "click", this.edit.bind(this));
 	OZ.Event.add(this.dom.tablekeys, "click", this.keys.bind(this));
 	OZ.Event.add(document, "keydown", this.press.bind(this));
@@ -165,7 +166,7 @@ SQL.TableManager.prototype.remove = function(e) {
 
 SQL.TableManager.prototype.edit = function(e) {
 	this.owner.window.open(_("edittable"), this.dom.container, this.save);
-	
+
 	var title = this.selection[0].getTitle();
 	this.dom.name.value = title;
 	try { /* throws in ie6 */
@@ -180,7 +181,7 @@ SQL.TableManager.prototype.edit = function(e) {
 		} catch(e) {}
 	} else {
 		this.dom.name.setSelectionRange(0, title.length);
-	} 
+	}
 }
 
 SQL.TableManager.prototype.keys = function(e) { /* open keys dialog */
@@ -195,7 +196,7 @@ SQL.TableManager.prototype.save = function() {
 SQL.TableManager.prototype.press = function(e) {
 	var target = OZ.Event.target(e).nodeName.toLowerCase();
 	if (target == "textarea" || target == "input") { return; } /* not when in form field */
-	
+
 	if (this.owner.rowManager.selected) { return; } /* do not process keypresses if a row is selected */
 
 	if (!this.selection.length) { return; } /* nothing if selection is active */

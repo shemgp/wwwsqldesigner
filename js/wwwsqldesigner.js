@@ -1,21 +1,21 @@
 SQL.Designer = function() {
 	SQL.Designer = this;
-	
+
 	this.tables = [];
 	this.relations = [];
 	this.title = document.title;
-	
+
 	SQL.Visual.apply(this);
 	new SQL.Toggle(OZ.$("toggle"));
-	
+
 	this.dom.container = OZ.$("area");
 	this.minSize = [
-		this.dom.container.offsetWidth,
-		this.dom.container.offsetHeight
+		50000, //this.dom.container.offsetWidth,
+		50000 //this.dom.container.offsetHeight
 	];
 	this.width = this.minSize[0];
 	this.height = this.minSize[1];
-	
+
 	this.typeIndex = false;
 	this.fkTypeFor = false;
 
@@ -41,12 +41,12 @@ SQL.Designer.prototype.sync = function() {
 		w = Math.max(w, t.x + t.width);
 		h = Math.max(h, t.y + t.height);
 	}
-	
+
 	this.width = w;
 	this.height = h;
 	this.map.sync();
 
-	if (this.vector) {	
+	if (this.vector) {
 		this.dom.svg.setAttribute("width", this.width);
 		this.dom.svg.setAttribute("height", this.height);
 	}
@@ -98,7 +98,7 @@ SQL.Designer.prototype.init2 = function() { /* secondary init, after locale & da
 	this.window = new SQL.Window(this);
 
 	this.sync();
-	
+
 	OZ.$("docs").value = _("docs");
 
 	var url = window.location.href;
@@ -116,7 +116,7 @@ SQL.Designer.prototype.getMaxZ = function() { /* find max zIndex */
 		var z = this.tables[i].getZ();
 		if (z > max) { max = z; }
 	}
-	
+
 	OZ.$("controls").style.zIndex = max+5;
 	return max;
 }
@@ -221,7 +221,7 @@ SQL.Designer.prototype.alignTables = function() {
 	var x = 10;
 	var y = 10;
 	var max = 0;
-	
+
 	this.tables.sort(function(a,b){
 		return b.getRelations().length - a.getRelations().length;
 	});
@@ -243,6 +243,120 @@ SQL.Designer.prototype.alignTables = function() {
 	this.sync();
 }
 
+SQL.Designer.prototype.dagreLayoutTables = function() {
+	var win = OZ.DOM.win();
+	var avail = win[0] - OZ.$("bar").offsetWidth;
+	var x = 10;
+	var y = 10;
+	var max = 0;
+
+	this.tables.sort(function(a,b){
+		return b.getRelations().length - a.getRelations().length;
+	});
+
+	var g = new dagre.graphlib.Graph();
+	g.setGraph({});
+	g.setDefaultEdgeLabel(function() { return {}; });
+
+	for (var i=0;i<this.tables.length;i++) {
+		var t = this.tables[i];
+		var w = t.dom.container.offsetWidth;
+		var h = t.dom.container.offsetHeight;
+		// set nodes
+		g.setNode(t.getTitle(), {label: t.getTitle(), width: w, height: h});
+
+		relations = t.getRelations();
+		for (var r=0;r<relations.length;++r)
+		{
+			// set node relations
+			if (t.getTitle() != relations[r].row1.owner.getTitle())
+			{
+				g.setEdge(t.getTitle(), relations[r].row1.owner.getTitle());
+				break;
+			}
+		}
+	}
+
+	dagre.layout(g);
+
+	// layout tables
+	for (var i=0;i<this.tables.length;i++) {
+		var t = this.tables[i];
+		var x = g.node(t.getTitle()).x;
+		var y = g.node(t.getTitle()).y;
+		t.moveTo(x,y);
+	}
+	this.sync();
+}
+
+SQL.Designer.prototype.klayjsLayoutTables = function() {
+	var win = OZ.DOM.win();
+	var avail = win[0] - OZ.$("bar").offsetWidth;
+	var x = 10;
+	var y = 10;
+	var max = 0;
+
+	this.tables.sort(function(a,b){
+		return b.getRelations().length - a.getRelations().length;
+	});
+
+	var children = [];
+	var edges = [];
+	var edgeCounter = 0;
+	for (var i=0;i<this.tables.length;i++) {
+		var t = this.tables[i];
+		var w = t.dom.container.offsetWidth;
+		var h = t.dom.container.offsetHeight;
+		// set nodes
+		children.push({id:t.getTitle(), width: w, height: h});
+
+		relations = t.getRelations();
+		for (var r=0;r<relations.length;++r)
+		{
+			// set node relations
+			if (t.getTitle() != relations[r].row1.owner.getTitle())
+			{
+				edges.push({id: "e" + edgeCounter++, source: t.getTitle(), target: relations[r].row1.owner.getTitle()});
+				break;
+			}
+		}
+	}
+
+	var graph = {
+		"id": "root",
+		"children": children,
+		"edges": edges
+	};
+	var ito = this;
+	$klay.layout({
+	  graph: graph,
+	  options: {
+			spacing: 20,
+			direction: "DOWN",
+			interactiveReferencePoint: "TOP_LEFT"
+		},
+	  success: function(layouted) {
+
+			// layout tables
+			for (var i=0;i<ito.tables.length;i++) {
+				var t = ito.tables[i];
+				for(c=0;c<layouted.children.length;++c)
+				{
+					if (layouted.children[c].id == t.getTitle())
+					{
+						var x = layouted.children[c].x;
+						var y = layouted.children[c].y;
+						t.moveTo(x,y);
+					}
+				}
+			}
+
+			ito.sync();
+		},
+	  error: function(error) { console.log(error); }
+	});
+}
+
 SQL.Designer.prototype.findNamedTable = function(name) { /* find row specified as table(row) */
 	for (var i=0;i<this.tables.length;i++) {
 		if (this.tables[i].getTitle() == name) { return this.tables[i]; }
@@ -254,7 +368,7 @@ SQL.Designer.prototype.toXML = function() {
 	xml += '<!-- SQL XML created by WWW SQL Designer, https://github.com/ondras/wwwsqldesigner/ -->\n';
 	xml += '<!-- Active URL: ' + location.href + ' -->\n';
 	xml += '<sql>\n';
-	
+
 	/* serialize datatypes */
 	if (window.XMLSerializer) {
 		var s = new XMLSerializer();
@@ -264,7 +378,7 @@ SQL.Designer.prototype.toXML = function() {
 	} else {
 		alert(_("errorxml")+': '+e.message);
 	}
-	
+
 	for (var i=0;i<this.tables.length;i++) {
 		xml += this.tables[i].toXML();
 	}
@@ -283,8 +397,8 @@ SQL.Designer.prototype.fromXML = function(node) {
 	}
 
 	for (var i=0;i<this.tables.length;i++) { /* ff one-pixel shift hack */
-		this.tables[i].select(); 
-		this.tables[i].deselect(); 
+		this.tables[i].select();
+		this.tables[i].deselect();
 	}
 
 	/* relations */
@@ -293,7 +407,7 @@ SQL.Designer.prototype.fromXML = function(node) {
 		var rel = rs[i];
 		var tname = rel.getAttribute("table");
 		var rname = rel.getAttribute("row");
-		
+
 		var t1 = this.findNamedTable(tname);
 		if (!t1) { continue; }
 		var r1 = t1.findNamedRow(rname);
@@ -308,7 +422,7 @@ SQL.Designer.prototype.fromXML = function(node) {
 
 		this.addRelation(r1, r2);
 	}
-	
+
 	this.sync();
 }
 

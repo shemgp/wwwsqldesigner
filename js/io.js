@@ -7,6 +7,7 @@ SQL.IO = function(owner) {
 	};
 
 	var ids = ["saveload","clientlocalsave", "clientsave", "clientlocalload", "clientlocallist","clientload", "clientsql", 
+                "diffsql", "applydiff",
 				"dropboxsave", "dropboxload", "dropboxlist",
 				"quicksave", "serversave", "serverload",
 				"serverlist", "serverimport"];
@@ -50,6 +51,8 @@ SQL.IO = function(owner) {
 	OZ.Event.add(this.dom.dropboxsave, "click", this.dropboxsave.bind(this));
 	OZ.Event.add(this.dom.dropboxlist, "click", this.dropboxlist.bind(this));
 	OZ.Event.add(this.dom.clientsql, "click", this.clientsql.bind(this));
+	OZ.Event.add(this.dom.diffsql, "click", this.diffsql.bind(this));
+	OZ.Event.add(this.dom.applydiff, "click", this.applydiff.bind(this));
 	OZ.Event.add(this.dom.quicksave, "click", this.quicksave.bind(this));
 	OZ.Event.add(this.dom.serversave, "click", this.serversave.bind(this));
 	OZ.Event.add(this.dom.serverload, "click", this.serverload.bind(this));
@@ -84,6 +87,8 @@ SQL.IO.prototype.click = function() { /* open io dialog */
 	this.build();
 	this.dom.ta.value = "";
 	this.dom.clientsql.value = _("clientsql") + " (" + window.DATATYPES.getAttribute("db") + ")";
+	this.dom.diffsql.value = _("diffsql");
+	this.dom.applydiff.value = _("applydiff");
 	this.owner.window.open(_("saveload"),this.dom.container);
 }
 
@@ -374,6 +379,48 @@ SQL.IO.prototype.clientsql = function() {
 	var path = bp + "db/"+window.DATATYPES.getAttribute("db")+"/output.xsl";
 	this.owner.window.showThrobber();
 	OZ.Request(path, this.finish.bind(this), {xml:true});
+}
+
+SQL.IO.prototype.diffsql = function() {
+    if (this.dom.ta.value == '')
+    {
+        alert("Please generate SQL first");
+        return false;
+    }
+	var bp = this.owner.getOption("xhrpath");
+	var url = bp + "backend/" + this.dom.backend.value+"/?action=diff";
+	var h = {"Content-type":"application/xml"};
+    OZ.Request(url, this.diffresponse, {xml:false, method:"post", data:"<sql>"+encodeURIComponent(this.dom.ta.value)+"</sql>", headers:h});
+}
+
+SQL.IO.prototype.diffresponse = function(data, code) {
+    ta = document.getElementById('textarea');
+	ta.value = data;
+}
+
+SQL.IO.prototype.applydiff = function(data, code) {
+    if (this.dom.ta.value == '')
+    {
+        alert("Please generate SQL first");
+        return false;
+    }
+	var bp = this.owner.getOption("xhrpath");
+	var url = bp + "backend/" + this.dom.backend.value+"/?action=applydiff";
+	var h = {"Content-type":"application/xml"};
+    OZ.Request(url, this.applydiffresponse, {xml:false, method:"post", data:"<sql>"+encodeURIComponent(this.dom.ta.value)+"</sql>", headers:h});
+}
+
+SQL.IO.prototype.applydiffresponse = function(data, code) {
+    if (data.trim() == 'ok')
+    {
+        alert('Applied diff. Please re-import DB');
+    }
+    else
+    {
+        alert('Had an error. Please see textarea');
+        ta = document.getElementById('textarea');
+        ta.value = data;
+    }
 }
 
 SQL.IO.prototype.finish = function(xslDoc) {

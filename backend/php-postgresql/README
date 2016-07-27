@@ -1,20 +1,23 @@
 Postgresql server backend for wwwsqldesigner
 version 0.1 beta
 
+To use features below, please copy sample.database.ini to database.ini
 
-Instructions:
+Load/Save tables:
+1. Add the database connection in the [loadlist] section of database.ini.
+2. Import database.sql to that database.  It uses wwwsqldesigner table.
+   If you changed the table in #2 then you need also to change database.sql
+   table creation.
 
-If you want to save/load your diagrams in a database...
+Importing database:
+1. Add the database connection information in the [import] section of
+   the credentials you want to use to import a database.
+   Note: If you import and you don't specify a database, then it will use the
+   database specified in the [import] section.
 
-1) Create a login role called 'wwwsqldesigner' using 'xxx' as password.
-2) Create a databse called 'wwwsqldesigner' with...
-      owner as 'wwwsqldesigner',
-      UTF-8 encoding,
-      and template0
-3) Connect to this newly created database and run the database.sql script
-   located in this folder.
-4) Edit config.js located in the js directory...
-      change default database to postgresql,
-      add postgresql to available backends
-5) If you want to import the schema of an an already created database,
-   edit the index.php script located in this directory
+Diffing then saving tables back to database:
+1. Add the database connection information in the [temp] section for a temporary
+   blank database.  Tables in this database will be erased.  It will be used
+   to create a diff of the current changes in the current database.
+   Warning: For now diffing and saving only for saving in the [import] database.
+2. Install apgdiff and make sure it's in the PATH.

@@ -439,7 +439,7 @@ SQL.IO.prototype.serverlist = function(e) {
 
 SQL.IO.prototype.serverimport = function(e) {
 	var name = prompt(_("serverimportprompt"), "");
-	if (!name) { return; }
+	//if (!name) { return; }
 	var bp = this.owner.getOption("xhrpath");
 	var url = bp + "backend/"+this.dom.backend.value+"/?action=import&database="+name;
 	this.owner.window.showThrobber();

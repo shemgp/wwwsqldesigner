@@ -332,7 +332,10 @@ SQL.Designer.prototype.klayjsLayoutTables = function() {
 	  options: {
 			spacing: 20,
 			direction: "DOWN",
-			interactiveReferencePoint: "TOP_LEFT"
+			interactiveReferencePoint: "TOP_LEFT",
+			edgeRouting: "SPLINES",
+			greedySwitch: "ONE_SIDED",
+			nodePlace: "LINEAR_SEGMENT"
 		},
 	  success: function(layouted) {
 

@@ -415,13 +415,13 @@ function get_config($name, $section = null, $else = null)
             fwrite($f, $data);
             fclose($f);
 
-            $psql = 'PGPASSWORD='.PASSWORD.' psql -h '.HOST_ADDR.
-                ' -U '.USER_NAME.' '.DATABASE_NAME.' < '.$diff_sql;
+            $psql = 'PGPASSWORD='.PASSWORD.' psql --set ON_ERROR_STOP=1 --echo-errors -h '.HOST_ADDR.
+                ' -U '.USER_NAME.' '.DATABASE_NAME.' < '.$diff_sql . ' 2>&1';
             exec($psql, $output, $return_var);
             if ($return_var == 0) {
                 echo 'ok';
             } else {
-                echo $output;
+                echo join("\n", $output);
             }
             unlink($diff_sql);
         break;

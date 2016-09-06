@@ -7,7 +7,7 @@ SQL.IO = function(owner) {
 	};
 
 	var ids = ["saveload","clientlocalsave", "clientsave", "clientlocalload", "clientlocallist","clientload", "clientsql", 
-                "diffsql", "applydiff",
+				"diffsql", "applydiff",
 				"dropboxsave", "dropboxload", "dropboxlist",
 				"quicksave", "serversave", "serverload",
 				"serverlist", "serverimport"];
@@ -382,6 +382,11 @@ SQL.IO.prototype.clientsql = function() {
 }
 
 SQL.IO.prototype.diffsql = function() {
+    if (this.dom.ta.value.indexOf('ERROR: ') != -1)
+    {
+        alert("SQL has errors, please fix first before applying");
+        return false;
+    }
     if (this.dom.ta.value == '')
     {
         alert("Please generate SQL first");
@@ -399,6 +404,11 @@ SQL.IO.prototype.diffresponse = function(data, code) {
 }
 
 SQL.IO.prototype.applydiff = function(data, code) {
+    if (this.dom.ta.value.indexOf('ERROR:') != -1)
+    {
+        alert("Diff had errors, please fix first before applying");
+        return false;
+    }
     if (this.dom.ta.value == '')
     {
         alert("Please generate SQL first");

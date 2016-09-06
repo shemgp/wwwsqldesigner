@@ -354,10 +354,10 @@ function get_config($name, $section = null, $else = null)
             }
 
             # put new database to clean database
-            $psql = 'PGPASSWORD='.TEMP_PASSWORD.' psql -h '.TEMP_HOST_ADDR.
+            $psql = 'PGPASSWORD='.TEMP_PASSWORD.' psql --set ON_ERROR_STOP=1 --echo-errors -h '.TEMP_HOST_ADDR.
                 ' -U '.TEMP_USER_NAME.' '.TEMP_DATABASE_NAME.' < '.$new_dump.' 2>&1';
             exec($psql, $output, $return_var);
-            if ($return_var != 0) {
+            if ($return_var != 0 || stripos(join('\n', $output), 'ERROR') == FALSE) {
                 echo $psql;
                 echo(implode("\n", $output));
                 die();

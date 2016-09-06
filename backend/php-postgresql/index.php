@@ -348,7 +348,7 @@ function get_config($name, $section = null, $else = null)
                 ' -U '.TEMP_USER_NAME.' -d '.TEMP_DATABASE_NAME.' 2>&1';
             exec($pg, $output, $return_var);
             if ($return_var != 0) {
-                echo $pg;
+                echo $pg."\n";
                 echo(implode("\n", $output));
                 die();
             }
@@ -357,8 +357,8 @@ function get_config($name, $section = null, $else = null)
             $psql = 'PGPASSWORD='.TEMP_PASSWORD.' psql --set ON_ERROR_STOP=1 --echo-errors -h '.TEMP_HOST_ADDR.
                 ' -U '.TEMP_USER_NAME.' '.TEMP_DATABASE_NAME.' < '.$new_dump.' 2>&1';
             exec($psql, $output, $return_var);
-                echo $psql;
             if ($return_var != 0 || stripos(join('\n', $output), 'ERROR:') !== FALSE) {
+                echo $psql."\n";
                 echo(implode("\n", $output));
                 die();
             }
@@ -367,7 +367,7 @@ function get_config($name, $section = null, $else = null)
                 ' -U '.TEMP_USER_NAME.' '.TEMP_DATABASE_NAME.' > '.$new_dump.' 2>&1';
             exec($pg_dump, $output, $return_var);
             if ($return_var != 0) {
-                echo $pg_dump;
+                echo $pg_dump."\n";
                 echo(implode("\n", $output));
                 die();
             }
@@ -377,7 +377,7 @@ function get_config($name, $section = null, $else = null)
                 ' -U '.USER_NAME.' '.DATABASE_NAME.' > '.$old_dump.' 2>&1';
             exec($pg_dump, $output, $return_var);
             if ($return_var != 0) {
-                echo $pg_dump;
+                echo $pg_dump."\n";
                 echo(implode("\n", $output));
                 die();
             }
@@ -390,7 +390,7 @@ function get_config($name, $section = null, $else = null)
                 ' -U '.TEMP_USER_NAME.' -d '.TEMP_DATABASE_NAME.' 2>&1';
             exec($pg, $output, $return_var);
             if ($return_var != 0) {
-                echo $pg_restore;
+                echo $pg_restore."\n";
                 echo(implode("\n", $output));
                 die();
             }

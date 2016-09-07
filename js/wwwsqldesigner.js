@@ -272,7 +272,6 @@ SQL.Designer.prototype.dagreLayoutTables = function() {
 			if (t.getTitle() != relations[r].row1.owner.getTitle())
 			{
 				g.setEdge(t.getTitle(), relations[r].row1.owner.getTitle());
-				break;
 			}
 		}
 	}
@@ -303,6 +302,7 @@ SQL.Designer.prototype.klayjsLayoutTables = function() {
 	var children = [];
 	var edges = [];
 	var edgeCounter = 0;
+
 	for (var i=0;i<this.tables.length;i++) {
 		var t = this.tables[i];
 		var w = t.dom.container.offsetWidth;
@@ -317,7 +317,6 @@ SQL.Designer.prototype.klayjsLayoutTables = function() {
 			if (t.getTitle() != relations[r].row1.owner.getTitle())
 			{
 				edges.push({id: "e" + edgeCounter++, source: t.getTitle(), target: relations[r].row1.owner.getTitle()});
-				break;
 			}
 		}
 	}
@@ -333,7 +332,10 @@ SQL.Designer.prototype.klayjsLayoutTables = function() {
 	  options: {
 			spacing: 20,
 			direction: "DOWN",
-			interactiveReferencePoint: "TOP_LEFT"
+			interactiveReferencePoint: "TOP_LEFT",
+			edgeRouting: "SPLINES",
+			greedySwitch: "ONE_SIDED",
+			nodePlace: "LINEAR_SEGMENT"
 		},
 	  success: function(layouted) {
 

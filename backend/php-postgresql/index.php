@@ -344,8 +344,9 @@ function get_config($name, $section = null, $else = null)
             $old_dump = $old_dump.'.sql';
 
             # clean database
+            $output = '';
             $pg = 'echo "DROP OWNED BY '.TEMP_USER_NAME.'" | PGPASSWORD='.TEMP_PASSWORD.' psql -h '.TEMP_HOST_ADDR.
-                ' -U '.TEMP_USER_NAME.' -d '.TEMP_DATABASE_NAME.' 2>&1';
+                ' -U '.TEMP_USER_NAME.' -d '.TEMP_DATABASE_NAME.' 2> /tmp/hehe.log; if [ $? != 0 ]; then cat /tmp/hehe.log; rm /tmp/hehe.log; exit 1; else rm /tmp/hehe.log; fi;';
             exec($pg, $output, $return_var);
             if ($return_var != 0) {
                 echo $pg."\n";
@@ -354,17 +355,20 @@ function get_config($name, $section = null, $else = null)
             }
 
             # put new database to clean database
+            $output = '';
             $psql = 'PGPASSWORD='.TEMP_PASSWORD.' psql --set ON_ERROR_STOP=1 --echo-errors -h '.TEMP_HOST_ADDR.
-                ' -U '.TEMP_USER_NAME.' '.TEMP_DATABASE_NAME.' < '.$new_dump.' 2>&1';
+                ' -U '.TEMP_USER_NAME.' '.TEMP_DATABASE_NAME.' < '.$new_dump.' 2> /tmp/hehe.log; if [ $? != 0 ]; then cat /tmp/hehe.log; rm /tmp/hehe.log; exit 1; else rm /tmp/hehe.log; fi;';
             exec($psql, $output, $return_var);
             if ($return_var != 0 || stripos(join('\n', $output), 'ERROR:') !== FALSE) {
                 echo $psql."\n";
                 echo(implode("\n", $output));
                 die();
             }
+
             # dump new database
+            $output = '';
             $pg_dump = 'PGPASSWORD='.TEMP_PASSWORD.' pg_dump --schema-only --column-insert --no-owner -h '.TEMP_HOST_ADDR.
-                ' -U '.TEMP_USER_NAME.' '.TEMP_DATABASE_NAME.' > '.$new_dump.' 2>&1';
+                ' -U '.TEMP_USER_NAME.' '.TEMP_DATABASE_NAME.' > '.$new_dump.' 2> /tmp/hehe.log; if [ $? != 0 ]; then cat /tmp/hehe.log; rm /tmp/hehe.log; exit 1; else rm /tmp/hehe.log; fi;';
             exec($pg_dump, $output, $return_var);
             if ($return_var != 0) {
                 echo $pg_dump."\n";
@@ -373,16 +377,22 @@ function get_config($name, $section = null, $else = null)
             }
 
             # get old database
+            $output = '';
             $pg_dump = 'PGPASSWORD='.PASSWORD.' pg_dump --schema-only --column-insert --no-owner -h '.HOST_ADDR.
-                ' -U '.USER_NAME.' '.DATABASE_NAME.' > '.$old_dump.' 2>&1';
+                ' -U '.USER_NAME.' '.DATABASE_NAME.' > '.$old_dump.' 2> /tmp/hehe.log; if [ $? != 0 ]; then cat /tmp/hehe.log; rm /tmp/hehe.log; exit 1; else rm /tmp/hehe.log; fi;';
             exec($pg_dump, $output, $return_var);
             if ($return_var != 0) {
                 echo $pg_dump."\n";
                 echo(implode("\n", $output));
                 die();
             }
+
             # get diff
-            $diff = 'cd /tmp; apgdiff '.basename(trim($old_dump)).' '.basename($new_dump);
+            $down = isset($_GET['down']) ? (bool) $_GET['down'] : false;
+            if (!$down)
+                $diff = 'cd /tmp; apgdiff '.basename(trim($old_dump)).' '.basename($new_dump);
+            else
+                $diff = 'cd /tmp; apgdiff '.basename($new_dump).' '.basename(trim($old_dump));
             passthru($diff);
 
             # clean database

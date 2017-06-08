@@ -6,8 +6,8 @@ SQL.IO = function(owner) {
 		container:OZ.$("io")
 	};
 
-	var ids = ["saveload","clientlocalsave", "clientsave", "clientlocalload", "clientlocallist","clientload", "clientsql", 
-				"diffsql", "applydiff",
+	var ids = ["saveload","clientlocalsave", "clientsave", "clientlocalload", "clientlocallist","clientload", "clientsql",
+				"upsql", 'downsql', "applydiff",
 				"dropboxsave", "dropboxload", "dropboxlist",
 				"quicksave", "serversave", "serverload",
 				"serverlist", "serverimport"];
@@ -17,7 +17,7 @@ SQL.IO = function(owner) {
 		this.dom[id] = elm;
 		elm.value = _(id);
 	}
-	
+
 	this.dom.quicksave.value += " (F2)";
 
 	var ids = ["client","server","output","backendlabel"];
@@ -26,21 +26,21 @@ SQL.IO = function(owner) {
 		var elm = OZ.$(id);
 		elm.innerHTML = _(id);
 	}
-	
+
 	this.dom.ta = OZ.$("textarea");
 	this.dom.backend = OZ.$("backend");
 
-	/* init dropbox before hiding the container so it can adjust its buttons */	
+	/* init dropbox before hiding the container so it can adjust its buttons */
 	this.dropBoxInit();
 
 	this.dom.container.parentNode.removeChild(this.dom.container);
 	this.dom.container.style.visibility = "";
-	
+
 	this.saveresponse = this.saveresponse.bind(this);
 	this.loadresponse = this.loadresponse.bind(this);
 	this.listresponse = this.listresponse.bind(this);
 	this.importresponse = this.importresponse.bind(this);
-	
+
 	OZ.Event.add(this.dom.saveload, "click", this.click.bind(this));
 	OZ.Event.add(this.dom.clientlocalsave, "click", this.clientlocalsave.bind(this));
 	OZ.Event.add(this.dom.clientsave, "click", this.clientsave.bind(this));
@@ -51,7 +51,8 @@ SQL.IO = function(owner) {
 	OZ.Event.add(this.dom.dropboxsave, "click", this.dropboxsave.bind(this));
 	OZ.Event.add(this.dom.dropboxlist, "click", this.dropboxlist.bind(this));
 	OZ.Event.add(this.dom.clientsql, "click", this.clientsql.bind(this));
-	OZ.Event.add(this.dom.diffsql, "click", this.diffsql.bind(this));
+	OZ.Event.add(this.dom.upsql, "click", this.upsql.bind(this));
+	OZ.Event.add(this.dom.downsql, "click", this.downsql.bind(this));
 	OZ.Event.add(this.dom.applydiff, "click", this.applydiff.bind(this));
 	OZ.Event.add(this.dom.quicksave, "click", this.quicksave.bind(this));
 	OZ.Event.add(this.dom.serversave, "click", this.serversave.bind(this));
@@ -87,7 +88,8 @@ SQL.IO.prototype.click = function() { /* open io dialog */
 	this.build();
 	this.dom.ta.value = "";
 	this.dom.clientsql.value = _("clientsql") + " (" + window.DATATYPES.getAttribute("db") + ")";
-	this.dom.diffsql.value = _("diffsql");
+	this.dom.upsql.value = _("upsql");
+	this.dom.downsql.value = _("downsql");
 	this.dom.applydiff.value = _("applydiff");
 	this.owner.window.open(_("saveload"),this.dom.container);
 }
@@ -103,7 +105,7 @@ SQL.IO.prototype.fromXMLText = function(xml) {
 		} else {
 			throw new Error("No XML parser available.");
 		}
-	} catch(e) { 
+	} catch(e) {
 		alert(_("xmlerror")+': '+e.message);
 		return;
 	}
@@ -113,7 +115,7 @@ SQL.IO.prototype.fromXMLText = function(xml) {
 SQL.IO.prototype.fromXML = function(xmlDoc) {
 	if (!xmlDoc || !xmlDoc.documentElement) {
 		alert(_("xmlerror")+': Null document');
-		return false; 
+		return false;
 	}
 	this.owner.fromXML(xmlDoc.documentElement);
 	this.owner.window.close();
@@ -149,11 +151,11 @@ SQL.IO.prototype.promptName = function(title, suffix) {
 }
 
 SQL.IO.prototype.clientlocalsave = function() {
-	if (!window.localStorage) { 
+	if (!window.localStorage) {
 		alert("Sorry, your browser does not seem to support localStorage.");
 		return;
 	}
-	
+
 	var xml = this.owner.toXML();
 	if (xml.length >= (5*1024*1024)/2) { /* this is a very big db structure... */
 		alert("Warning: your database structure is above 5 megabytes in size, this is above the localStorage single key limit allowed by some browsers, example Mozilla Firefox 10");
@@ -164,7 +166,7 @@ SQL.IO.prototype.clientlocalsave = function() {
 	if (!key) { return; }
 
 	key = "wwwsqldesigner_databases_" + (key || "default");
-	
+
 	try {
 		localStorage.setItem(key, xml);
 		if (localStorage.getItem(key) != xml) { throw new Error("Content verification failed"); }
@@ -174,16 +176,16 @@ SQL.IO.prototype.clientlocalsave = function() {
 }
 
 SQL.IO.prototype.clientlocalload = function() {
-	if (!window.localStorage) { 
+	if (!window.localStorage) {
 		alert("Sorry, your browser does not seem to support localStorage.");
 		return;
 	}
-	
+
 	var key = this.promptName("serverloadprompt");
 	if (!key) { return; }
 
 	key = "wwwsqldesigner_databases_" + (key || "default");
-	
+
 	try {
 		var xml = localStorage.getItem(key);
 		if (!xml) { throw new Error("No data available"); }
@@ -191,23 +193,23 @@ SQL.IO.prototype.clientlocalload = function() {
 		alert("Error loading database structure from localStorage! ("+e.message+")");
 		return;
 	}
-	
+
 	this.fromXMLText(xml);
 }
 
 SQL.IO.prototype.clientlocallist = function() {
-	if (!window.localStorage) { 
+	if (!window.localStorage) {
 		alert("Sorry, your browser does not seem to support localStorage.");
 		return;
 	}
-	
+
 	/* --- Define some useful vars --- */
 	var baseKeysName = "wwwsqldesigner_databases_";
 	var localLen = localStorage.length;
 	var data = "";
 	var schemasFound = false;
 	var code = 200;
-	
+
 	/* --- work --- */
 	try {
 		for (var i = 0; i< localLen; ++i) {
@@ -324,7 +326,7 @@ SQL.IO.prototype.dropboxsave = function() {
 		if (!key) { return; }
 
 		var filename = (key || "default") + ".xml";
-	
+
 		sql_io.listresponse("Saving...", 200);
 		var xml = sql_io.owner.toXML();
 		sql_io.dropboxClient.writeFile(filename, xml, function(error, stat) {
@@ -344,7 +346,7 @@ SQL.IO.prototype.dropboxload = function() {
 		if (!key) { return; }
 
 		var filename = (key || "default") + ".xml";
-	
+
 		sql_io.listresponse("Loading...", 200);
 		sql_io.dropboxClient.readFile(filename, function(error, data) {
 			sql_io.listresponse("", 200);
@@ -381,26 +383,64 @@ SQL.IO.prototype.clientsql = function() {
 	OZ.Request(path, this.finish.bind(this), {xml:true});
 }
 
-SQL.IO.prototype.diffsql = function() {
-    if (this.dom.ta.value.indexOf('ERROR: ') != -1)
-    {
-        alert("SQL has errors, please fix first before applying");
-        return false;
-    }
-    if (this.dom.ta.value == '')
-    {
-        alert("Please generate SQL first");
-        return false;
-    }
-	var bp = this.owner.getOption("xhrpath");
-	var url = bp + "backend/" + this.dom.backend.value+"/?action=diff";
-	var h = {"Content-type":"application/xml"};
-    OZ.Request(url, this.diffresponse, {xml:false, method:"post", data:"<sql>"+encodeURIComponent(this.dom.ta.value)+"</sql>", headers:h});
+SQL.IO.prototype.upsql = function() {
+	var bp = this.owner.getOption("staticpath");
+	var path = bp + "db/"+window.DATATYPES.getAttribute("db")+"/output.xsl";
+	this.owner.window.showThrobber();
+	OZ.Request(path, this.finish.bind(this), {xml:true});
+
+	ito = this;
+	setTimeout(function () {
+		ito.owner.window.showThrobber();
+	    if (ito.dom.ta.value.indexOf('ERROR: ') != -1)
+	    {
+	        alert("SQL has errors, please fix first before applying");
+	        return false;
+	    }
+	    if (ito.dom.ta.value == '')
+	    {
+	        alert("Please generate SQL first");
+	        return false;
+	    }
+
+		var bp = ito.owner.getOption("xhrpath");
+		var url = bp + "backend/" + ito.dom.backend.value+"/?action=diff";
+		var h = {"Content-type":"application/xml"};
+	    OZ.Request(url, ito.diffresponse.bind(ito), {xml:false, method:"post", data:"<sql>"+encodeURIComponent(ito.dom.ta.value)+"</sql>", headers:h});
+	}, 100);
+}
+
+SQL.IO.prototype.downsql = function() {
+	var bp = this.owner.getOption("staticpath");
+	var path = bp + "db/"+window.DATATYPES.getAttribute("db")+"/output.xsl";
+	this.owner.window.showThrobber();
+	OZ.Request(path, this.finish.bind(this), {xml:true});
+
+	ito = this;
+	setTimeout(function () {
+		ito.owner.window.showThrobber();
+	    if (ito.dom.ta.value.indexOf('ERROR: ') != -1)
+	    {
+	        alert("SQL has errors, please fix first before applying");
+	        return false;
+	    }
+	    if (ito.dom.ta.value == '')
+	    {
+	        alert("Please generate SQL first");
+	        return false;
+	    }
+
+		var bp = ito.owner.getOption("xhrpath");
+		var url = bp + "backend/" + ito.dom.backend.value+"/?action=diff&down=true";
+		var h = {"Content-type":"application/xml"};
+	    OZ.Request(url, ito.diffresponse.bind(ito), {xml:false, method:"post", data:"<sql>"+encodeURIComponent(ito.dom.ta.value)+"</sql>", headers:h});
+	}, 100);
 }
 
 SQL.IO.prototype.diffresponse = function(data, code) {
     ta = document.getElementById('textarea');
 	ta.value = data;
+	this.owner.window.hideThrobber();
 }
 
 SQL.IO.prototype.applydiff = function(data, code) {
@@ -417,13 +457,14 @@ SQL.IO.prototype.applydiff = function(data, code) {
 	var bp = this.owner.getOption("xhrpath");
 	var url = bp + "backend/" + this.dom.backend.value+"/?action=applydiff";
 	var h = {"Content-type":"application/xml"};
-    OZ.Request(url, this.applydiffresponse, {xml:false, method:"post", data:"<sql>"+encodeURIComponent(this.dom.ta.value)+"</sql>", headers:h});
+    OZ.Request(url, this.applydiffresponse.bind(this), {xml:false, method:"post", data:"<sql>"+encodeURIComponent(this.dom.ta.value)+"</sql>", headers:h});
 }
 
 SQL.IO.prototype.applydiffresponse = function(data, code) {
+	this.owner.window.hideThrobber();
     if (data.trim() == 'ok')
     {
-        alert('Applied diff. Please re-import DB');
+        alert('Applied diff');
     }
     else
     {

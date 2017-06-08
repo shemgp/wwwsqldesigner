@@ -83,8 +83,9 @@
 	<string name="dropboxload">Load from Dropbox</string>
 	<string name="dropboxlist">List from Dropbox</string>
 	<string name="clientsql">Generate SQL</string>
-	<string name="diffsql">Diff SQL</string>
-	<string name="applydiff">Apply Diff</string>
+	<string name="upsql">Generate Up SQL</string>
+	<string name="downsql">Generate Down SQL</string>
+	<string name="applydiff">Apply SQL to DB</string>
 	<string name="backendlabel">Server backend:</string>
 	<string name="serversave">Save</string>
 	<string name="quicksave">Quicksave</string>

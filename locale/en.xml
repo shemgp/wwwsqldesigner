@@ -85,6 +85,8 @@
 	<string name="clientsql">Generate SQL</string>
 	<string name="upsql">Generate Up SQL</string>
 	<string name="downsql">Generate Down SQL</string>
+	<string name="laravelmigration">Generate Laravel migration</string>
+	<string name="laravelmigrationprompt">Enter Laravel Migration Class</string>
 	<string name="applydiff">Apply SQL to DB</string>
 	<string name="backendlabel">Server backend:</string>
 	<string name="serversave">Save</string>

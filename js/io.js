@@ -7,7 +7,7 @@ SQL.IO = function(owner) {
 	};
 
 	var ids = ["saveload","clientlocalsave", "clientsave", "clientlocalload", "clientlocallist","clientload", "clientsql",
-				"upsql", 'downsql', "applydiff",
+				"upsql", 'downsql', 'laravelmigration', "applydiff",
 				"dropboxsave", "dropboxload", "dropboxlist",
 				"quicksave", "serversave", "serverload",
 				"serverlist", "serverimport"];
@@ -53,6 +53,7 @@ SQL.IO = function(owner) {
 	OZ.Event.add(this.dom.clientsql, "click", this.clientsql.bind(this));
 	OZ.Event.add(this.dom.upsql, "click", this.upsql.bind(this));
 	OZ.Event.add(this.dom.downsql, "click", this.downsql.bind(this));
+	OZ.Event.add(this.dom.laravelmigration, "click", this.laravelmigration.bind(this));
 	OZ.Event.add(this.dom.applydiff, "click", this.applydiff.bind(this));
 	OZ.Event.add(this.dom.quicksave, "click", this.quicksave.bind(this));
 	OZ.Event.add(this.dom.serversave, "click", this.serversave.bind(this));
@@ -90,6 +91,7 @@ SQL.IO.prototype.click = function() { /* open io dialog */
 	this.dom.clientsql.value = _("clientsql") + " (" + window.DATATYPES.getAttribute("db") + ")";
 	this.dom.upsql.value = _("upsql");
 	this.dom.downsql.value = _("downsql");
+	this.dom.laravelmigration.value = _("laravelmigration");
 	this.dom.applydiff.value = _("applydiff");
 	this.owner.window.open(_("saveload"),this.dom.container);
 }
@@ -435,6 +437,18 @@ SQL.IO.prototype.downsql = function() {
 		var h = {"Content-type":"application/xml"};
 	    OZ.Request(url, ito.diffresponse.bind(ito), {xml:false, method:"post", data:"<sql>"+encodeURIComponent(ito.dom.ta.value)+"</sql>", headers:h});
 	}, 100);
+}
+
+SQL.IO.prototype.laravelmigration = function() {
+	var name = prompt(_("laravelmigrationprompt"));
+	if (!name) { return; }
+	this._name = name;
+	this.owner.window.showThrobber();
+	ito = this;
+	var bp = ito.owner.getOption("xhrpath");
+	var url = bp + "backend/" + ito.dom.backend.value+"/?action=laravelmigration&class=" + name;
+	var h = {"Content-type":"application/xml"};
+	OZ.Request(url, ito.diffresponse.bind(ito), {xml:false, method:"post", data:"<sql>"+encodeURIComponent(ito.dom.ta.value)+"</sql>", headers:h});
 }
 
 SQL.IO.prototype.diffresponse = function(data, code) {

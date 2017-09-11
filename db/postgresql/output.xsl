@@ -28,13 +28,14 @@
         <xsl:for-each select="table">
         <xsl:text>CREATE TABLE "</xsl:text>
 		<xsl:value-of select="@name" />
+        <xsl:text>" </xsl:text>
 		<xsl:text> (
 </xsl:text>
 
         <xsl:for-each select="row">
             <xsl:text>    "</xsl:text>
 			<xsl:value-of select="@name" />
-			<xsl:text> </xsl:text>
+			<xsl:text>" </xsl:text>
 
             <xsl:choose>
                 <xsl:when test="@autoincrement = 1">
@@ -86,12 +87,14 @@
 <!-- keys -->
 		<xsl:for-each select="key">
 			<xsl:text>ALTER TABLE </xsl:text>
-            <xsl:text></xsl:text>
+            <xsl:text>"</xsl:text>
 			<xsl:value-of select="../@name" />
-			<xsl:text> </xsl:text>
+			<xsl:text>" </xsl:text>
             <xsl:text>ADD CONSTRAINT </xsl:text>
+            <xsl:text>"</xsl:text>
 			<xsl:value-of select="../@name" />
-			<xsl:text>_pkey </xsl:text>
+			<xsl:text>_pkey</xsl:text>
+            <xsl:text>" </xsl:text>
 			<xsl:choose>
 				<xsl:when test="@type = 'PRIMARY'">PRIMARY KEY (</xsl:when>
 				<xsl:when test="@type = 'UNIQUE'">UNIQUE (</xsl:when>

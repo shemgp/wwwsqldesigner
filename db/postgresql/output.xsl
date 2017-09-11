@@ -73,6 +73,7 @@
                 <xsl:if test="not (position()=last())">
                     <xsl:text>,
 </xsl:text>
+                </xsl:if>
 			</xsl:if>
 		</xsl:for-each>
 

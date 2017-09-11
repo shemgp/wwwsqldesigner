@@ -70,12 +70,12 @@
                     <xsl:value-of select="comment"/>
                     <xsl:text> */</xsl:text>
                 </xsl:if>
+            </xsl:if>
 
                 <xsl:if test="not (position()=last())">
                     <xsl:text>,
 </xsl:text>
                 </xsl:if>
-			</xsl:if>
 		</xsl:for-each>
 
 <xsl:text>
@@ -111,29 +111,6 @@
 </xsl:text>
 
 		</xsl:for-each>
-
-
-<!-- fk -->
-	<xsl:for-each select="row">
-		<xsl:for-each select="relation">
-			<xsl:text>ALTER TABLE </xsl:text>
-			<xsl:value-of select="../../@name" />
-			<xsl:text> ADD CONSTRAINT </xsl:text>
-			<xsl:value-of select="../../@name" />
-			<xsl:text>_</xsl:text>
-			<xsl:value-of select="../@name" />
-			<xsl:text>_fkey</xsl:text>
-			<xsl:text> FOREIGN KEY (</xsl:text>
-			<xsl:value-of select="../@name" />
-			<xsl:text>) REFERENCES </xsl:text>
-			<xsl:value-of select="@table" />
-			<xsl:text>(</xsl:text>
-			<xsl:value-of select="@row" />
-			<xsl:text>);
-</xsl:text>
-		</xsl:for-each>
-	</xsl:for-each>
-
 
             <xsl:if test="comment">
                 <xsl:text>COMMENT ON TABLE "</xsl:text>
@@ -172,7 +149,38 @@
         </xsl:for-each>
 
         <xsl:for-each select="table">
+            <!-- fk -->
+            	<xsl:for-each select="row">
+            		<xsl:for-each select="relation">
+            			<xsl:text>ALTER TABLE </xsl:text>
+                        <xsl:text>"</xsl:text>
+            			<xsl:value-of select="../../@name" />
+                        <xsl:text>" </xsl:text>
+            			<xsl:text> ADD CONSTRAINT </xsl:text>
+                        <xsl:text>"</xsl:text>
+            			<xsl:value-of select="../../@name" />
+            			<xsl:text>_</xsl:text>
+            			<xsl:value-of select="../@name" />
+            			<xsl:text>_fkey</xsl:text>
+                        <xsl:text>" </xsl:text>
+            			<xsl:text> FOREIGN KEY (</xsl:text>
+                        <xsl:text>"</xsl:text>
+            			<xsl:value-of select="../@name" />
+                        <xsl:text>"</xsl:text>
+            			<xsl:text>) REFERENCES </xsl:text>
+                        <xsl:text>"</xsl:text>
+            			<xsl:value-of select="@table" />
+                        <xsl:text>" </xsl:text>
+            			<xsl:text>(</xsl:text>
+                        <xsl:text>"</xsl:text>
+            			<xsl:value-of select="@row" />
+                        <xsl:text>"</xsl:text>
+            			<xsl:text>);
+</xsl:text>
+            		</xsl:for-each>
+            	</xsl:for-each>
 
+            <!-- index -->
                 <xsl:for-each select="key">
                   <xsl:if test="@type = 'INDEX'">
 

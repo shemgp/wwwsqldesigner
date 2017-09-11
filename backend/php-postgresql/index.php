@@ -390,9 +390,9 @@ function get_config($name, $section = null, $else = null)
             # get diff
             $down = isset($_GET['down']) ? (bool) $_GET['down'] : false;
             if (!$down)
-                $diff = 'cd /tmp; apgdiff '.basename(trim($old_dump)).' '.basename($new_dump);
+                $diff = 'cd /tmp; apgdiff '.basename(trim($old_dump)).' '.basename($new_dump). ' 2>&1';
             else
-                $diff = 'cd /tmp; apgdiff '.basename($new_dump).' '.basename(trim($old_dump));
+                $diff = 'cd /tmp; apgdiff '.basename($new_dump).' '.basename(trim($old_dump)). ' 2>&1';
             passthru($diff);
 
             # clean database

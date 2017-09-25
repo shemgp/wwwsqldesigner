@@ -35,11 +35,12 @@ function get_config($name, $section = null, $else = null)
             break;
         }
 
-        // parse environment
+        // parse .env
         $laravel_dir = dirname(dirname($require));
         $dotenv = new Dotenv\Dotenv($laravel_dir);
         $dotenv->load();
 
+        // generate ini on the fly
         $ini_string = "[loadlist]
 DATABASE_NAME=wwwsqldesigner
 USER_NAME=wwwsqldesigner
@@ -67,6 +68,8 @@ DIR=$laravel_dir";
     {
         $ini_string = file_get_contents('database_config.ini');
     }
+
+    // get ini values
     if ($section !== null) {
         $ini_array = parse_ini_string($ini_string, true);
         if (isset($ini_array[$section][$name])) {
@@ -107,6 +110,9 @@ function setup_import()
     Define('PASSWORD', get_config('PASSWORD', $section, 'xxx'));        // password for role
 }
 
+/**
+ * Sets tempdb config
+ */
 function setup_temp_db()
 {
     $section = 'temp';
@@ -492,6 +498,7 @@ function get_diff($action)
 
         $up = shell_exec('cd /tmp; apgdiff '.basename(trim($old_dump)).' '.basename($new_dump). ' 2>&1');
         $down = shell_exec('cd /tmp; apgdiff '.basename($new_dump).' '.basename(trim($old_dump)). ' 2>&1');
+        $down = remove_down_id_seq($down);
         $return = generate_laravel_migration($class, $up, $down);
     }
     else
@@ -501,7 +508,10 @@ function get_diff($action)
         if (!$down)
             $diff = 'cd /tmp; apgdiff '.basename(trim($old_dump)).' '.basename($new_dump). ' 2>&1';
         else
+        {
             $diff = 'cd /tmp; apgdiff '.basename($new_dump).' '.basename(trim($old_dump)). ' 2>&1';
+            $diff = remove_down_id_seq($diff);
+        }
         passthru($diff);
         $return = '';
     }
@@ -522,6 +532,14 @@ function get_diff($action)
     return $return;
 }
 
+/**
+ * Generates a laravel migration using sql statements: up and down.
+ *
+ * @param string $class The class to be used in the migration
+ * @param string $up Up SQL migration
+ * @param string $down Down SQL migration
+ * @return string The whole migration
+ */
 function generate_laravel_migration($class, $up, $down)
 {
     return <<<MIGRATE
@@ -583,34 +601,60 @@ EOS
 MIGRATE;
 }
 
+/**
+ * Returns true if there's a laravel directory. For now, it actually uses
+ * get_config which checks if there's a laravel directory.
+ * TODO: it's actually slower if you do it in get_config
+ */
 function is_in_laravel_public()
 {
     return get_config("DIR", 'laravel');
 }
 
+/**
+ * Saves migration file to database/migrations in the laravel
+ * folder when it's writable.
+ *
+ * @param string $laravel_dir path to laravel directory (where the .env is)
+ * @param string $migration The whole migration to be written
+ * @param string $class The name of the class. Used to determin if there's a
+ *                      duplicate class already.
+ */
 function save_to_laravel_migration($laravel_dir, $migration, $class)
 {
-    $migrations_dir = $laravel_dir.DIRECTORY_SEPARATOR.'database'.DIRECTORY_SEPARATOR.'migrations';
-    $output = shell_exec('cd '.$migrations_dir.'; grep "class.*'.$class.'" | cut -d: -f 1');
+    $migrations_dir = trim($laravel_dir.DIRECTORY_SEPARATOR.'database'.DIRECTORY_SEPARATOR.'migrations');
+    if (!is_writable($migrations_dir))
+    {
+        echo "$migrations_dir not writable by ".get_current_user().".";
+        return false;
+    }
+
+    $output = trim(shell_exec('cd '.$migrations_dir.'; grep "class.*'.$class.'" * | cut -d: -f 1'));
     if ($output != "")
     {
-        $last_file = end(scandir($migrations_dir));
+        $last_file = trim(end(scandir($migrations_dir)));
         if ($last_file == $output)
             $migration_file = $last_file;
         else
         {
-            echo "Migration file already exists: ". $ouput;
+            echo "Migration file already exists: ". $output;
             return false;
         }
     }
     else
     {
-        $migration_file = shell_exec('cd '.$laravel_dir.'; php artisan make:migration '.snake_case($class).' | cut -d" " -f 3');
+        $migration_file = trim(shell_exec('cd '.$laravel_dir.'; php artisan make:migration '.snake_case($class).' | cut -d" " -f 3')).'.php';
     }
-    if (file_put_contents($migration_dir.DIRECTORY_SEPARATOR.$migration_file, $migration))
-        return $migration_dir.DIRECTORY_SEPARATOR.$migration_file;
+    if (file_put_contents($migrations_dir.DIRECTORY_SEPARATOR.$migration_file, $migration))
+        return $migrations_dir.DIRECTORY_SEPARATOR.$migration_file;
 }
 
+/**
+ * Converts CamelCase to snake_case
+ *
+ * @param string $input The camel cased name to convert to snake case
+ * @return string snake cased name
+ */
 function snake_case($input) {
   preg_match_all('!([A-Z][A-Z0-9]*(?=$|[A-Z][a-z0-9])|[A-Za-z][a-z0-9]+)!', $input, $matches);
   $ret = $matches[0];
@@ -618,6 +662,22 @@ function snake_case($input) {
     $match = $match == strtoupper($match) ? strtolower($match) : lcfirst($match);
   }
   return implode('_', $ret);
+}
+
+/**
+ * Remove DROP SEQUENCE [table]_id_seq as it's automatically removed in postgres
+ *
+ * @param string $down_sql The sql used to down migrate
+ * @return string The sql with removed DROP SEQUENCE [table]_id_seq
+ */
+function remove_down_id_seq($down_sql)
+{
+    $sql_array = explode("\n", $down_sql);
+    array_walk($sql_array, function (&$item, $key) {
+        if (preg_match("/^DROP SEQUENCE.*_id_seq/", $item))
+            $item = '';
+    });
+    return implode("\n", $sql_array);
 }
 /*
     list: 501/200

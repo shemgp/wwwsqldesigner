@@ -351,7 +351,16 @@ switch ($a) {
         unlink($diff_sql);
     break;
     case 'laravelmigration':
-        get_diff($a);
+        $migration = get_diff($a);
+        if (is_in_laravel_public())
+        {
+            $filename = save_to_laravel_migration($migration, $_GET['class']);
+            echo 'Saved Migration to '.$filename.'.';
+        }
+        else
+        {
+            echo $migration;
+        }
     break;
     default: header('HTTP/1.0 501 Not Implemented');
 }
@@ -433,7 +442,7 @@ function get_diff($action)
 
         $up = shell_exec('cd /tmp; apgdiff '.basename(trim($old_dump)).' '.basename($new_dump). ' 2>&1');
         $down = shell_exec('cd /tmp; apgdiff '.basename($new_dump).' '.basename(trim($old_dump)). ' 2>&1');
-        echo generate_laravel_migration($class, $up, $down);
+        $return = generate_laravel_migration($class, $up, $down);
     }
     else
     {
@@ -444,6 +453,7 @@ function get_diff($action)
         else
             $diff = 'cd /tmp; apgdiff '.basename($new_dump).' '.basename(trim($old_dump)). ' 2>&1';
         passthru($diff);
+        $return = '';
     }
     # clean database
     $pg = 'echo "DROP OWNED BY '.TEMP_USER_NAME.'" | PGPASSWORD='.TEMP_PASSWORD.' psql -h '.TEMP_HOST_ADDR.
@@ -458,6 +468,8 @@ function get_diff($action)
 
     unlink('/tmp/'.basename($new_dump));
     unlink('/tmp/'.basename($old_dump));
+
+    return $return;
 }
 
 function generate_laravel_migration($class, $up, $down)
@@ -519,6 +531,11 @@ EOS
     }
 }
 MIGRATE;
+}
+
+function is_in_laravel_public()
+{
+    return file_exists('../../../index.php');
 }
 
 /*

@@ -497,8 +497,9 @@ function get_diff($action)
             $class = $_GET['class'];
 
         $up = shell_exec('cd /tmp; apgdiff '.basename(trim($old_dump)).' '.basename($new_dump). ' 2>&1');
+        $up = remove_drop_sequence_id_seq($up);
         $down = shell_exec('cd /tmp; apgdiff '.basename($new_dump).' '.basename(trim($old_dump)). ' 2>&1');
-        $down = remove_down_id_seq($down);
+        $down = remove_drop_sequence_id_seq($down);
         $return = generate_laravel_migration($class, $up, $down);
     }
     else
@@ -510,8 +511,9 @@ function get_diff($action)
         else
         {
             $diff = 'cd /tmp; apgdiff '.basename($new_dump).' '.basename(trim($old_dump)). ' 2>&1';
-            $diff = remove_down_id_seq($diff);
         }
+
+        $diff = remove_drop_sequence_id_seq($diff);
         passthru($diff);
         $return = '';
     }
@@ -670,7 +672,7 @@ function snake_case($input) {
  * @param string $down_sql The sql used to down migrate
  * @return string The sql with removed DROP SEQUENCE [table]_id_seq
  */
-function remove_down_id_seq($down_sql)
+function remove_drop_sequence_id_seq($down_sql)
 {
     $sql_array = explode("\n", $down_sql);
     array_walk($sql_array, function (&$item, $key) {

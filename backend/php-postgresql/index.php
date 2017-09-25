@@ -24,9 +24,10 @@ function get_config($name, $section = null, $else = null)
     {
         // parse Laravel's public/index.php
         $requires = preg_grep("/require.*;$/", file($laravel_index_file));
-	array_walk($requires, function (&$item, $key) {
+            array_walk($requires, function (&$item, $key) {
             $item = trim(preg_replace("/^require[^']*'(.*)';/", "$1", $item));
-	});
+        });
+
         foreach($requires as $require)
         {
             // require first require to get vendor/autoload.php
@@ -400,10 +401,11 @@ switch ($a) {
     break;
     case 'laravelmigration':
         $migration = get_diff($a);
-        if (is_in_laravel_public())
+        if ($laravel_dir = is_in_laravel_public())
         {
-            $filename = save_to_laravel_migration($migration, $_GET['class']);
-            echo 'Saved Migration to '.$filename.'.';
+            $filename = save_to_laravel_migration($laravel_dir, $migration, $_GET['class']);
+            if ($filename)
+                echo 'Saved Migration to '.$filename.'.';
         }
         else
         {
@@ -583,9 +585,40 @@ MIGRATE;
 
 function is_in_laravel_public()
 {
-    return file_exists('../../../index.php');
+    return get_config("DIR", 'laravel');
 }
 
+function save_to_laravel_migration($laravel_dir, $migration, $class)
+{
+    $migrations_dir = $laravel_dir.DIRECTORY_SEPARATOR.'database'.DIRECTORY_SEPARATOR.'migrations';
+    $output = shell_exec('cd '.$migrations_dir.'; grep "class.*'.$class.'" | cut -d: -f 1');
+    if ($output != "")
+    {
+        $last_file = end(scandir($migrations_dir));
+        if ($last_file == $output)
+            $migration_file = $last_file;
+        else
+        {
+            echo "Migration file already exists: ". $ouput;
+            return false;
+        }
+    }
+    else
+    {
+        $migration_file = shell_exec('cd '.$laravel_dir.'; php artisan make:migration '.snake_case($class).' | cut -d" " -f 3');
+    }
+    if (file_put_contents($migration_dir.DIRECTORY_SEPARATOR.$migration_file, $migration))
+        return $migration_dir.DIRECTORY_SEPARATOR.$migration_file;
+}
+
+function snake_case($input) {
+  preg_match_all('!([A-Z][A-Z0-9]*(?=$|[A-Z][a-z0-9])|[A-Za-z][a-z0-9]+)!', $input, $matches);
+  $ret = $matches[0];
+  foreach ($ret as &$match) {
+    $match = $match == strtoupper($match) ? strtolower($match) : lcfirst($match);
+  }
+  return implode('_', $ret);
+}
 /*
     list: 501/200
     load: 501/200/404

@@ -18,15 +18,63 @@
 
 function get_config($name, $section = null, $else = null)
 {
+    $laravel_index_file = __DIR__.DIRECTORY_SEPARATOR.'..'.DIRECTORY_SEPARATOR.'..'.DIRECTORY_SEPARATOR.'..'.DIRECTORY_SEPARATOR.'index.php';
+
+    if (file_exists($laravel_index_file) && !file_exists('database.ini') && !file_exists('database_config.ini'))
+    {
+        // parse Laravel's public/index.php
+        $requires = preg_grep("/require.*;$/", file($laravel_index_file));
+	array_walk($requires, function (&$item, $key) {
+            $item = trim(preg_replace("/^require[^']*'(.*)';/", "$1", $item));
+	});
+        foreach($requires as $require)
+        {
+            // require first require to get vendor/autoload.php
+            require_once $require;
+            break;
+        }
+
+        // parse environment
+        $laravel_dir = dirname(dirname($require));
+        $dotenv = new Dotenv\Dotenv($laravel_dir);
+        $dotenv->load();
+
+        $ini_string = "[loadlist]
+DATABASE_NAME=wwwsqldesigner
+USER_NAME=wwwsqldesigner
+PASSWORD=verysecretpassword4wwwsqldesigner
+TABLE=wwwsqldesigner
+
+[import]
+DATABASE_NAME=${_ENV['DB_DATABASE']}
+USER_NAME=${_ENV['DB_USERNAME']}
+PASSWORD=${_ENV['DB_PASSWORD']}
+
+[temp]
+DATABASE_NAME=tempdb
+USER_NAME=tempdb
+PASSWORD=verysecretpassword4temp
+
+[laravel]
+DIR=$laravel_dir";
+    }
+    else if ($section !== null)
+    {
+        $ini_string = file_get_contents('database.ini');
+    }
+    else
+    {
+        $ini_string = file_get_contents('database_config.ini');
+    }
     if ($section !== null) {
-        $ini_array = parse_ini_file('database.ini', true);
+        $ini_array = parse_ini_string($ini_string, true);
         if (isset($ini_array[$section][$name])) {
             return $ini_array[$section][$name];
         }
 
         return $else;
     } else {
-        $ini_array = parse_ini_file('database_config.ini');
+        $ini_array = parse_ini_string($ini_string);
         if (isset($ini_array[$name])) {
             return $ini_array[$name];
         }

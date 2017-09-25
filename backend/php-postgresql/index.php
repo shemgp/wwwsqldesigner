@@ -18,9 +18,32 @@
 
 function get_config($name, $section = null, $else = null)
 {
-    $laravel_index_file = __DIR__.DIRECTORY_SEPARATOR.'..'.DIRECTORY_SEPARATOR.'..'.DIRECTORY_SEPARATOR.'..'.DIRECTORY_SEPARATOR.'index.php';
 
-    if (file_exists($laravel_index_file) && !file_exists('database.ini') && !file_exists('database_config.ini'))
+    if ($section !== null)
+    {
+        if (file_exists('database.ini'))
+            $ini_string = @file_get_contents('database.ini');
+        else
+            $ini_string = '[loadlist]
+DATABASE_NAME=wwwsqldesigner
+USER_NAME=wwwsqldesigner
+PASSWORD=verysecretpassword4wwwsqldesigner
+TABLE=wwwsqldesigner
+
+[temp]
+DATABASE_NAME=tempdb
+USER_NAME=tempdb
+PASSWORD=verysecretpassword4temp';
+        $ini_array = parse_ini_string($ini_string, true);
+    }
+    else
+    {
+        $ini_string = @file_get_contents('database_config.ini');
+        $ini_array = parse_ini_string($ini_string);
+    }
+
+    $laravel_index_file = __DIR__.DIRECTORY_SEPARATOR.'..'.DIRECTORY_SEPARATOR.'..'.DIRECTORY_SEPARATOR.'..'.DIRECTORY_SEPARATOR.'index.php';
+    if (file_exists($laravel_index_file))
     {
         // parse Laravel's public/index.php
         $requires = preg_grep("/require.*;$/", file($laravel_index_file));
@@ -40,45 +63,45 @@ function get_config($name, $section = null, $else = null)
         $dotenv = new Dotenv\Dotenv($laravel_dir);
         $dotenv->load();
 
-        // generate ini on the fly
-        $ini_string = "[loadlist]
-DATABASE_NAME=wwwsqldesigner
-USER_NAME=wwwsqldesigner
-PASSWORD=verysecretpassword4wwwsqldesigner
-TABLE=wwwsqldesigner
-
-[import]
-DATABASE_NAME=${_ENV['DB_DATABASE']}
-USER_NAME=${_ENV['DB_USERNAME']}
-PASSWORD=${_ENV['DB_PASSWORD']}
-
-[temp]
-DATABASE_NAME=tempdb
-USER_NAME=tempdb
-PASSWORD=verysecretpassword4temp
-
-[laravel]
-DIR=$laravel_dir";
-    }
-    else if ($section !== null)
-    {
-        $ini_string = file_get_contents('database.ini');
-    }
-    else
-    {
-        $ini_string = file_get_contents('database_config.ini');
+        // use laravel database credentials if they are not set
+        if ($section != null && $_ENV['DB_DATABASE'] != null && $_ENV['DB_USERNAME'] != null)
+        {
+            if (!isset($ini_array['import']['DATABASE_NAME']) || $ini_array['import']['DATABASE'] == '')
+            {
+                $ini_array['import'] = [
+                    'DATABASE_NAME' => $_ENV['DB_DATABASE'],
+                    'USER_NAME' => $_ENV['DB_USERNAME'],
+                    'PASSWORD' => $_ENV['DB_PASSWORD']
+                ];
+                $ini_array['laravel'] = [
+                    'DIR' => $laravel_dir
+                ];
+            }
+        }
+        else
+        {
+            if (!isset($ini_array['DATABASE_NAME']) || $ini_array['DATABASE'] == '')
+            {
+                $ini_array = $ini_array + [
+                    'DATABASE_NAME' => $_ENV['DB_DATABASE'],
+                    'USER_NAME' => $_ENV['DB_USERNAME'],
+                    'PASSWORD' => $_ENV['DB_PASSWORD']
+                ];
+                $ini_array = $ini_array + [
+                    'DIR' => $laravel_dir
+                ];
+            }
+        }
     }
 
     // get ini values
     if ($section !== null) {
-        $ini_array = parse_ini_string($ini_string, true);
         if (isset($ini_array[$section][$name])) {
             return $ini_array[$section][$name];
         }
 
         return $else;
     } else {
-        $ini_array = parse_ini_string($ini_string);
         if (isset($ini_array[$name])) {
             return $ini_array[$name];
         }

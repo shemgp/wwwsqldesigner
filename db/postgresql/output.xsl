@@ -85,32 +85,36 @@
 
 </xsl:text>
 <!-- keys -->
-		<xsl:for-each select="key">
-			<xsl:text>ALTER TABLE </xsl:text>
-            <xsl:text>"</xsl:text>
-			<xsl:value-of select="../@name" />
-			<xsl:text>" </xsl:text>
-            <xsl:text>ADD CONSTRAINT </xsl:text>
-            <xsl:text>"</xsl:text>
-			<xsl:value-of select="../@name" />
-			<xsl:text>_pkey</xsl:text>
-            <xsl:text>" </xsl:text>
-			<xsl:choose>
-				<xsl:when test="@type = 'PRIMARY'">PRIMARY KEY (</xsl:when>
-				<xsl:when test="@type = 'UNIQUE'">UNIQUE (</xsl:when>
-				<xsl:otherwise>KEY (</xsl:otherwise>
-			</xsl:choose>
+        <xsl:for-each select="key">
+            <xsl:if test="@type != 'INDEX'">
+                <xsl:text>ALTER TABLE </xsl:text>
+                <xsl:text>"</xsl:text>
+                <xsl:value-of select="../@name" />
+                <xsl:text>" </xsl:text>
+                <xsl:text>ADD CONSTRAINT </xsl:text>
+                <xsl:text>"</xsl:text>
+                <xsl:value-of select="../@name" />
+                <xsl:choose>
+                    <xsl:when test="@type = 'PRIMARY'">_pkey</xsl:when>
+                    <xsl:when test="@type = 'UNIQUE'">_ukey</xsl:when>
+                </xsl:choose>
+                <xsl:text>" </xsl:text>
+                <xsl:choose>
+                    <xsl:when test="@type = 'PRIMARY'">PRIMARY KEY (</xsl:when>
+                    <xsl:when test="@type = 'UNIQUE'">UNIQUE (</xsl:when>
+                    <xsl:otherwise> (</xsl:otherwise>
+                </xsl:choose>
 
-			<xsl:for-each select="part">
-				<xsl:text></xsl:text><xsl:value-of select="." /><xsl:text></xsl:text>
-				<xsl:if test="not (position() = last())">
-					<xsl:text>, </xsl:text>
-				</xsl:if>
-			</xsl:for-each>
-			<xsl:text>);
+                <xsl:for-each select="part">
+                    <xsl:text></xsl:text><xsl:value-of select="." /><xsl:text></xsl:text>
+                    <xsl:if test="not (position() = last())">
+                        <xsl:text>, </xsl:text>
+                    </xsl:if>
+                </xsl:for-each>
+                <xsl:text>);
 </xsl:text>
-
-		</xsl:for-each>
+            </xsl:if>
+        </xsl:for-each>
 
             <xsl:if test="comment">
                 <xsl:text>COMMENT ON TABLE "</xsl:text>

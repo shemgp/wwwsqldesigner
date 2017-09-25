@@ -15,7 +15,7 @@ If you wish to support this project, <a href='https://www.paypal.com/cgi-bin/web
 
 # News
 
-# Usage in Laravel with PostgreSQL
+## Usage in Laravel with PostgreSQL
 You may now use app to modify PostgreSQL databases used in Laravel.
 Just:
 1. Checkout this repository in Laravel's `public` folder.

@@ -60,7 +60,15 @@
 			<xsl:if test="default">
                 <xsl:if test=" default != 'NULL' ">
                     <xsl:text> DEFAULT </xsl:text>
-                    <xsl:value-of select="default" />
+                    <xsl:variable name="length_of_default" select="string-length(default)" />
+                    <xsl:choose>
+                        <xsl:when test='substring(default,1,2) = "&apos;&apos;" or substring(default,($length_of_default - 1),2) = "&apos;&apos;"'>
+                            <xsl:value-of select="substring(default,2,($length_of_default - 2))" />
+                        </xsl:when>
+                        <xsl:otherwise>
+                            <xsl:value-of select="default" />
+                        </xsl:otherwise>
+                    </xsl:choose>
                     <xsl:text></xsl:text>
                 </xsl:if>
 

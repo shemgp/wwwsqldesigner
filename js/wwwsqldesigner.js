@@ -335,7 +335,6 @@ SQL.Designer.prototype.klayjsLayoutTables = function() {
 			interactiveReferencePoint: "TOP_LEFT",
 			edgeRouting: "SPLINES",
 			greedySwitch: "ONE_SIDED",
-			nodePlace: "LINEAR_SEGMENT"
 		},
 	  success: function(layouted) {
 

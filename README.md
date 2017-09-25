@@ -18,17 +18,19 @@ If you wish to support this project, <a href='https://www.paypal.com/cgi-bin/web
 ## Usage in Laravel with PostgreSQL
 You may now use app to modify PostgreSQL databases used in Laravel.
 Just:
-1. Checkout this repository in Laravel's `public` folder.
-2. Make sure that `apgdiff` is installed.
-3. Create PostgreSQL `tempdb` and `wwwsqldesigner` users and databases with
-   `verysecretpassword4tempdb` and `verysecretpassword4wwwsqldesigner` passwords
-   respectively.  Gathers your main database from the `.env`.
-   Make sure it's using PostgreSQL as it doesn't check it.
-4. Import `backend/php-postgresql/database.sql` to `wwwsqldesigner` table:
+1. Install Laravel a .env that points to a PostgreSQL database.
+2. Checkout this repository into Laravel's `public` folder.
+3. Make sure that `apgdiff` is installed.
+4. Copy `backend/php-postgresql/sample.database.ini`
+   to `backend/php-postgresql/database.ini` and create the user and database
+   of `[loadlist]` and `[temp]`. You may change their passwords too.
+   You don't need to edit `[import]` section, as the credentials will be
+   gathered from Laravel's the `.env`.
+5. Import `backend/php-postgresql/database.sql` to `wwwsqldesigner` table:
     ~~~bash
     sudo -H -u postgres psql wwwsqldesigner < backend/php-postgresql/database.sql
     ~~~
-5. Point you browser to `[laravel URL]/wwwsqldesigner`. Have fun!
+6. Point you browser to `[laravel URL]/wwwsqldesigner`. Have fun!
 
 ## Moved to GitHub
 

@@ -18,7 +18,7 @@ If you wish to support this project, <a href='https://www.paypal.com/cgi-bin/web
 ## Usage in Laravel with PostgreSQL
 You may now use app to modify PostgreSQL databases used in Laravel.
 Just:
-1. Install Laravel a .env that points to a PostgreSQL database.
+1. Install Laravel with a .env that points to a PostgreSQL database.
 2. Checkout this repository into Laravel's `public` folder.
 3. Make sure that `apgdiff` is installed.
 4. Copy `backend/php-postgresql/sample.database.ini`
@@ -30,7 +30,12 @@ Just:
     ~~~bash
     sudo -H -u postgres psql wwwsqldesigner < backend/php-postgresql/database.sql
     ~~~
-6. Point you browser to `[laravel URL]/wwwsqldesigner`. Have fun!
+6. Point you browser to `[laravel URL]/wwwsqldesigner`.
+7. Add web permissions to database/migrations:
+    ~~~bash
+    chown -R $USER:www-data database/migrations
+    chmod -R 775 database/migrations
+    ~~~
 
 ## Moved to GitHub
 

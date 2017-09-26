@@ -184,7 +184,7 @@ SQL.Designer.prototype.getOption = function(name) {
 		case "snap": return 0;
 		case "showsize": return 0;
 		case "showtype": return 0;
-		case "pattern": return "%R_%T";
+		case "pattern": return "%S_%R";
 		case "hide": return false;
 		case "vector": return true;
 		default: return null;

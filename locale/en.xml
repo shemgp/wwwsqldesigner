@@ -51,7 +51,7 @@
 	<string name="snap">Table snap distance</string>
 	<string name="optionsnapnotice">In pixels, 0 = disable snapping</string>
 	<string name="pattern">Pattern for foreign names</string>
-	<string name="optionpatternnotice">%T = primary table, %R = primary key, %t = foreign table</string>
+	<string name="optionpatternnotice">%T = primary table (%S = singular), %R = primary key, %t = foreign table</string>
 	<string name="hide">Hide connectors on table drag?</string>
 	<string name="vector">Draw smooth connectors (if supported by browser)?</string>
 	<string name="showsize">Show field size in table design?</string>

@@ -15,6 +15,11 @@ If you wish to support this project, <a href='https://www.paypal.com/cgi-bin/web
 
 # News
 
+## Fields
+* Added a way to add times (`updated_at`, `created_at`, `deleted_at`).
+* Able to use `[singular_table_name]_id` in foreign keys with the use of the %S formatter.
+* Set default to `[singular_table_name]_id` for foreign keys.
+
 ## Usage in Laravel with PostgreSQL
 You may now use app to modify PostgreSQL databases used in Laravel.
 Just:

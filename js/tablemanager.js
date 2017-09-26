@@ -10,7 +10,7 @@ SQL.TableManager = function(owner) {
 	this.selection = [];
 	this.adding = false;
 
-	var ids = ["addtable","removetable","aligntables","layouttables","cleartables","addrow","edittable","tablekeys"];
+	var ids = ["addtable","removetable","aligntables","layouttables","cleartables","addrow","addtimes","edittable","tablekeys"];
 	for (var i=0;i<ids.length;i++) {
 		var id = ids[i];
 		var elm = OZ.$(id);
@@ -35,6 +35,7 @@ SQL.TableManager = function(owner) {
 	OZ.Event.add(this.dom.removetable, "click", this.remove.bind(this));
 	OZ.Event.add(this.dom.cleartables, "click", this.clear.bind(this));
 	OZ.Event.add(this.dom.addrow, "click", this.addRow.bind(this));
+	OZ.Event.add(this.dom.addtimes, "click", this.addTimes.bind(this));
 	OZ.Event.add(this.dom.aligntables, "click", this.owner.alignTables.bind(this.owner));
 	OZ.Event.add(this.dom.layouttables, "click", this.owner.klayjsLayoutTables.bind(this.owner));
 	OZ.Event.add(this.dom.edittable, "click", this.edit.bind(this));
@@ -48,6 +49,18 @@ SQL.TableManager.prototype.addRow = function(e) {
 	var newrow = this.selection[0].addRow(_("newrow"));
 	this.owner.rowManager.select(newrow);
 	newrow.expand();
+}
+
+SQL.TableManager.prototype.addTimes = function(e) {
+	var updated_at = this.selection[0].addRow('updated_at');
+	updated_at.update({"type": SQL.Designer.getTypeIndex("Timestamp w/ TZ")});
+	updated_at.update({"nll": false});
+	var created_at = this.selection[0].addRow('created_at');
+	created_at.update({"type": SQL.Designer.getTypeIndex("Timestamp w/ TZ")});
+	created_at.update({"nll": true});
+	var deleted_at = this.selection[0].addRow('deleted_at');
+	deleted_at.update({"type": SQL.Designer.getTypeIndex("Timestamp w/ TZ")});
+	deleted_at.update({"nll": true});
 }
 
 SQL.TableManager.prototype.select = function(table, multi) { /* activate table */
@@ -79,10 +92,12 @@ SQL.TableManager.prototype.processSelection = function() {
 		this.dom.edittable.disabled = false;
 		this.dom.tablekeys.disabled = false;
 		this.dom.removetable.value = _("removetable");
+		this.dom.addtimes.disabled = false;
 	} else {
 		this.dom.addrow.disabled = true;
 		this.dom.edittable.disabled = true;
 		this.dom.tablekeys.disabled = true;
+		this.dom.addtimes.disabled = true;
 	}
 	if (this.selection.length) {
 		this.dom.removetable.disabled = false;

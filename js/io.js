@@ -1,6 +1,7 @@
 SQL.IO = function(owner) {
 	this.owner = owner;
 	this._name = ""; /* last used name with server load/save */
+	this._class_name = ""; /* last used class_name for laravelmigration */
 	this.lastUsedName = ""; /* last used name with local storage or dropbox load/save */
 	this.dom = {
 		container:OZ.$("io")
@@ -440,13 +441,14 @@ SQL.IO.prototype.downsql = function() {
 }
 
 SQL.IO.prototype.laravelmigration = function() {
-	var name = prompt(_("laravelmigrationprompt"));
-	if (!name) { return; }
-	this._name = name;
+	var class_name = prompt(_("laravelmigrationprompt"), this._class_name);
+	if (!class_name) { return; }
+	if (class_name.match(/\s/g)) { alert("Should have no spaces."); return; }
+	this._class_name = class_name;
 	this.owner.window.showThrobber();
 	ito = this;
 	var bp = ito.owner.getOption("xhrpath");
-	var url = bp + "backend/" + ito.dom.backend.value+"/?action=laravelmigration&class=" + name;
+	var url = bp + "backend/" + ito.dom.backend.value+"/?action=laravelmigration&class=" + class_name;
 	var h = {"Content-type":"application/xml"};
 	OZ.Request(url, ito.diffresponse.bind(ito), {xml:false, method:"post", data:"<sql>"+encodeURIComponent(ito.dom.ta.value)+"</sql>", headers:h});
 }

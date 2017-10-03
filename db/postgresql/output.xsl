@@ -102,6 +102,17 @@
                 <xsl:text>ADD CONSTRAINT </xsl:text>
                 <xsl:text>"</xsl:text>
                 <xsl:value-of select="../@name" />
+
+                <xsl:for-each select="part">
+                    <xsl:if test="position() = 1">
+                        <xsl:text>_</xsl:text>
+                    </xsl:if>
+                    <xsl:text></xsl:text><xsl:value-of select="." /><xsl:text></xsl:text>
+                    <xsl:if test="not (position() = last())">
+                        <xsl:text>_</xsl:text>
+                    </xsl:if>
+                </xsl:for-each>
+
                 <xsl:choose>
                     <xsl:when test="@type = 'PRIMARY'">_pkey</xsl:when>
                     <xsl:when test="@type = 'UNIQUE'">_ukey</xsl:when>

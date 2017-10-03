@@ -47,8 +47,21 @@ PASSWORD=verysecretpassword4temp';
     {
         // parse Laravel's public/index.php
         $requires = preg_grep("/require.*;$/", file($laravel_index_file));
-            array_walk($requires, function (&$item, $key) {
-            $item = trim(preg_replace("/^require[^']*'(.*)';/", "$1", $item));
+        array_walk($requires, function (&$item, $key) use ($laravel_index_file) {
+            // Guess proper path. Even replacing __DIR__
+            //  remove require and require_once
+            $item = preg_replace('/require[_]*[once]*/', "", $item);
+            // remove first open quote
+            $item = preg_replace('/ [\'"]/', "", $item);
+            // replace __DIR__
+            $item = str_replace('__DIR__', dirname($laravel_index_file), $item);
+            // remove .' or ."
+            $item = preg_replace('/\.[\'"]/', "", $item);
+            // remove '. or ".
+            $item = preg_replace('/[\'"]\./', "", $item);
+            // remove '; or ";
+            $item = preg_replace('/[\'"][ ]*;/', "", $item);
+            $item = trim($item);
         });
 
         foreach($requires as $require)
@@ -60,8 +73,20 @@ PASSWORD=verysecretpassword4temp';
 
         // parse .env
         $laravel_dir = dirname(dirname($require));
-        $dotenv = new Dotenv\Dotenv($laravel_dir);
-        $dotenv->load();
+        if (class_exists('Dotenv\Dotenv'))
+        {
+            $dotenv = new Dotenv\Dotenv($laravel_dir);
+            $dotenv->load();
+        }
+        else if (class_exists('Dotenv'))
+        {
+            $dotenv = new Dotenv();
+            $dotenv->load($laravel_dir);
+        }
+        else
+        {
+            die('Unable to load Dotenv class.');
+        }
 
         // use laravel database credentials if they are not set
         if ($section != null && $_ENV['DB_DATABASE'] != null && $_ENV['DB_USERNAME'] != null)

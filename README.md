@@ -34,6 +34,7 @@ Just:
 5. Import `backend/php-postgresql/database.sql` to `wwwsqldesigner` table:
     ~~~bash
     sudo -H -u postgres psql wwwsqldesigner < backend/php-postgresql/database.sql
+    echo "GRANT ALL ON wwwsqldesigner TO wwwsqldesigner;" | sudo -H -u postgres psql wwwsqldesigner 
     ~~~
 6. Point you browser to `[laravel URL]/wwwsqldesigner`.
 7. Add web permissions to database/migrations:

@@ -537,6 +537,8 @@ function get_diff($action)
         die();
     }
 
+    $apgdiff_exec = 'cd /tmp; apgdiff';
+
     if ($action == 'laravelmigration')
     {
         # get migration
@@ -544,10 +546,10 @@ function get_diff($action)
         if (isset($_GET['class']))
             $class = $_GET['class'];
 
-        $up = shell_exec('cd /tmp; apgdiff '.basename(trim($old_dump)).' '.basename($new_dump). ' 2>&1');
-        $up = remove_drop_sequence_id_seq($up);
-        $down = shell_exec('cd /tmp; apgdiff '.basename($new_dump).' '.basename(trim($old_dump)). ' 2>&1');
-        $down = remove_drop_sequence_id_seq($down);
+        $up = shell_exec($apgdiff_exec.' '.basename(trim($old_dump)).' '.basename($new_dump). ' 2>&1');
+        $up = remove_unneeded($up);
+        $down = shell_exec($apgdiff_exec.' '.basename($new_dump).' '.basename(trim($old_dump)). ' 2>&1');
+        $down = remove_unneeded($down);
         $return = generate_laravel_migration($class, $up, $down);
     }
     else
@@ -555,15 +557,19 @@ function get_diff($action)
         # get diff
         $down = isset($_GET['down']) ? (bool) $_GET['down'] : false;
         if (!$down)
-            $diff = 'cd /tmp; apgdiff '.basename(trim($old_dump)).' '.basename($new_dump). ' 2>&1';
+            $diff_cmd = $apgdiff_exec.' '.basename(trim($old_dump)).' '.basename($new_dump). ' 2>&1';
         else
-        {
-            $diff = 'cd /tmp; apgdiff '.basename($new_dump).' '.basename(trim($old_dump)). ' 2>&1';
-        }
+            $diff_cmd = $apgdiff_exec.' '.basename($new_dump).' '.basename(trim($old_dump)). ' 2>&1';
 
-        $diff = remove_drop_sequence_id_seq($diff);
-        passthru($diff);
+        $diff = shell_exec($diff_cmd);
+        $diff = remove_unneeded($diff);
+        echo $diff;
         $return = '';
+/* FOR DEBUGGING
+        passthru('cat /tmp/'.basename($new_dump));
+        echo "--------------------------------------";
+        passthru('cat /tmp/'.basename($old_dump));
+*/
     }
     # clean database
     $pg = 'echo "DROP OWNED BY '.TEMP_USER_NAME.'" | PGPASSWORD='.TEMP_PASSWORD.' psql -h '.TEMP_HOST_ADDR.
@@ -720,14 +726,30 @@ function snake_case($input) {
  * @param string $down_sql The sql used to down migrate
  * @return string The sql with removed DROP SEQUENCE [table]_id_seq
  */
-function remove_drop_sequence_id_seq($down_sql)
+function remove_unneeded($down_sql)
 {
     $sql_array = explode("\n", $down_sql);
-    array_walk($sql_array, function (&$item, $key) {
-        if (preg_match("/^DROP SEQUENCE.*_id_seq/", $item))
+    $remove_next = false;
+    $sql_final_array = [];
+    array_walk($sql_array, function (&$item, $key) use (&$remove_next, &$sql_final_array) {
+        if ($remove_next)
+        {
+            $remove_next = false;
+            return;
+        }
+        if (preg_match("/^DROP SEQUENCE.*_id_seq/", $item)
+            || preg_match("/^(DROP|CREATE) EXTENSION.*/", $item))
+        {
             $item = '';
+            $remove_next = true;
+        }
+        else
+        {
+            $sql_final_array[] = $item;
+            $remove_next = false;
+        }
     });
-    return implode("\n", $sql_array);
+    return implode("\n", $sql_final_array);
 }
 /*
     list: 501/200

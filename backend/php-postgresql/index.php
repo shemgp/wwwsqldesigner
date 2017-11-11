@@ -90,8 +90,8 @@ PASSWORD=verysecretpassword4temp';
 
         // use laravel database credentials if they are not set
         if ($section != null && $_ENV['DB_DATABASE'] != null && $_ENV['DB_USERNAME'] != null)
-        {
-            if (!isset($ini_array['import']['DATABASE_NAME']) || $ini_array['import']['DATABASE'] == '')
+	{
+            if (!isset($ini_array['import']['DATABASE_NAME']) || $ini_array['import']['DATABASE_NAME'] == '')
             {
                 $ini_array['import'] = [
                     'DATABASE_NAME' => $_ENV['DB_DATABASE'],

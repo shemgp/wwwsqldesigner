@@ -88,6 +88,8 @@ PASSWORD=verysecretpassword4temp';
             die('Unable to load Dotenv class.');
         }
 
+        $_ENV = getenv();
+
         // use laravel database credentials if they are not set
         if ($section != null && $_ENV['DB_DATABASE'] != null && $_ENV['DB_USERNAME'] != null)
 	{

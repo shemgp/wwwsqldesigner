@@ -690,7 +690,9 @@ function save_to_laravel_migration($laravel_dir, $migration, $class)
     $output = trim(shell_exec('cd '.$migrations_dir.'; grep "class.*'.$class.'" * | cut -d: -f 1'));
     if ($output != "")
     {
-        $last_file = trim(end(scandir($migrations_dir)));
+        $tmp_files = scandir($migrations_dir);
+        $end = end($tmp_files);
+        $last_file = trim($end);
         if ($last_file == $output)
             $migration_file = $last_file;
         else

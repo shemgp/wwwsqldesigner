@@ -92,16 +92,13 @@ PASSWORD=verysecretpassword4temp';
 
         // use laravel database credentials if they are not set
         if ($section != null && $_ENV['DB_DATABASE'] != null && $_ENV['DB_USERNAME'] != null)
-	{
+	    {
             if (!isset($ini_array['import']['DATABASE_NAME']) || $ini_array['import']['DATABASE_NAME'] == '')
             {
                 $ini_array['import'] = [
                     'DATABASE_NAME' => $_ENV['DB_DATABASE'],
                     'USER_NAME' => $_ENV['DB_USERNAME'],
                     'PASSWORD' => $_ENV['DB_PASSWORD']
-                ];
-                $ini_array['laravel'] = [
-                    'DIR' => $laravel_dir
                 ];
             }
         }
@@ -114,11 +111,19 @@ PASSWORD=verysecretpassword4temp';
                     'USER_NAME' => $_ENV['DB_USERNAME'],
                     'PASSWORD' => $_ENV['DB_PASSWORD']
                 ];
-                $ini_array = $ini_array + [
-                    'DIR' => $laravel_dir
-                ];
             }
         }
+    }
+    if ($laravel_dir)
+    {
+        $ini_array = $ini_array + [
+            'laravel' => [
+                'DIR' => $laravel_dir,
+            ]
+        ];
+        $ini_array = $ini_array + [
+            'DIR' => $laravel_dir,
+        ];
     }
 
     // get ini values
